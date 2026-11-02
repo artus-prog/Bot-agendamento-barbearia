@@ -144,6 +144,6 @@ estruturar o agente no n8n. As decisões do projeto, a montagem do
 fluxo e os testes foram feitos por nós, e a revisão do código
 (incluindo as limitações listadas acima) também.
 
-## Autores
+## Autor
 
 - Ártus Alves: [GitHub](https://github.com/artus-prog)
