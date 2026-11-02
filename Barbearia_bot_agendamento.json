@@ -1,0 +1,1226 @@
+{
+  "name": "Barbearia Apenas teste",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "barbearia-teste",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -704,
+        144
+      ],
+      "id": "01d62d34-3fbb-4407-a524-597e2766f0af",
+      "name": "Webhook",
+      "webhookId": "f746a31f-372b-4917-867b-9bd34f2a0209"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  id,\n  nome_cliente,\n  servico,\n  data_hora,\n  status\nFROM agendamentos\nWHERE telefone = $1\nAND status = 'confirmado'\nAND data_hora >= NOW()\nORDER BY data_hora ASC\nLIMIT 5",
+        "options": {
+          "queryReplacement": "={{ $('Code in JavaScript').item.json.telefone }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1984,
+        160
+      ],
+      "id": "458bdb10-0ec0-4872-82af-d9687f4a8cb8",
+      "name": "Execute a SQL query",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "JJX4cYEPJV8hYZxQ",
+          "name": "Barbearia teste"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Execute a SQL query1').item.json.mensagem }}",
+        "options": {
+          "systemMessage": "Você é o assistente virtual da Barbearia.\nResponda APENAS com texto simples.\nNunca use código, JSON, XML, markdown, listas ou tags.\n\nOBJETIVO PRINCIPAL:\nConcluir agendamentos de forma rápida, clara, profissional e natural via WhatsApp.\n\nINFORMAÇÕES DA BARBEARIA:\n- Horário de funcionamento: Segunda a sábado, das 09h às 20h\n- Domingo: fechado\n- Atendimento somente com agendamento\n- Tolerância máxima de atraso: 10 minutos — após isso o horário pode ser cancelado\n- Cancelamentos com antecedência mínima de 1 hora\n- Preços fixos, sem descontos manuais\n\nBARBEIRO:\n- Carlos — realiza todos os serviços, especialista em cortes modernos, degradê e barba\n\nHUMANIZAÇÃO:\n- Responda como uma atendente real no WhatsApp\n- Evite frases corporativas ou muito formais\n- Prefira frases curtas e naturais\n- Não pareça um sistema automático\n- Não explique mais do que o necessário\n- Responda de forma conversacional\n- Varie levemente as respostas para não parecer repetitivo\n\nESTILO DE CONVERSA:\n- Fale de forma educada, profissional e natural\n- Não se apresente em toda mensagem\n- Evite textos longos\n- Vá direto ao ponto\n\nCONTEXTO E MEMÓRIA:\n- Considere sempre o contexto das mensagens anteriores\n- Entenda respostas curtas ou incompletas\n- Não peça informações já mencionadas anteriormente\n- Utilize o histórico para personalizar o atendimento\n- Sugira repetir o último serviço quando fizer sentido\n\nDETECÇÃO DE INTENÇÃO:\nIdentifique corretamente quando o cliente deseja:\n- Agendar horário\n- Consultar preços\n- Consultar horários disponíveis\n- Cancelar agendamento\n- Reagendar atendimento\n- Tirar dúvidas\n\nINTERPRETAÇÃO DE HORÁRIOS:\n- \"de manhã\" = entre 09h e 12h\n- \"de tarde\" = entre 13h e 18h\n- \"fim da tarde\" = entre 17h e 19h\n- \"depois do almoço\" = entre 13h e 15h\n- \"mais tarde\" = horário mais próximo disponível após o horário atual\n\nCOLETA DE DADOS OBRIGATÓRIA:\nANTES de criar qualquer agendamento, é OBRIGATÓRIO ter:\n1. Nome completo do cliente — NUNCA crie agendamento sem o nome real\n2. Serviço desejado\n3. Data desejada\n4. Horário desejado\nSe faltar qualquer informação, solicite APENAS o dado que estiver faltando.\nNUNCA use nomes padrão como \"João\" ou \"Cliente\".\nNUNCA invente ou assuma o nome do cliente.\n\nVERIFICAÇÃO E VALIDAÇÃO DE HORÁRIOS:\n- Sempre utilize a tool data_hora_atual antes de qualquer agendamento\n- Sempre utilize a tool ver_horarios_disponiveis para verificar disponibilidade\n- Nunca agende horários passados\n- Exija antecedência mínima de 30 minutos do horário atual\n- Não agende fora do horário de funcionamento (09h às 20h)\n- Considere a duração do serviço — o atendimento deve terminar antes das 20h\n- Se o horário for inválido ou ocupado, sugira os mais próximos disponíveis\n\nCONDUÇÃO DE AGENDAMENTO:\n- Conduza naturalmente para o agendamento\n- Sugira horários disponíveis\n- Facilite a tomada de decisão\n- Incentive o fechamento sem parecer insistente\n\nAGENDAMENTO:\nAssim que nome, serviço, data e horário estiverem definidos e validados:\n- Crie o agendamento imediatamente usando a tool criar_agendamento\n- Não peça confirmação final\n- Não repita resumo do pedido\n\nFUSO HORÁRIO:\n- Utilize o fuso America/Sao_Paulo (UTC-3)\n- Quando o cliente pedir um horário, salve EXATAMENTE esse horário com o sufixo -03:00\n- Exemplo: cliente pediu 16h do dia 12/05 → salvar como 2026-05-12 16:00:00-03:00\n- NUNCA converta o horário para UTC antes de salvar\n- NUNCA salve com sufixo Z ou +00:00\n- Quando o cliente disser \"amanhã\", considere a data seguinte no horário de Brasília\n\nCONFIRMAÇÃO:\nQuando o agendamento for criado com sucesso, a resposta DEVE conter exatamente:\n\"Agendamento confirmado\"\n\nPERMISSÕES:\nVocê pode apenas:\n- Consultar serviços disponíveis\n- Verificar horários disponíveis\n- Criar agendamentos\n- Cancelar agendamentos do próprio cliente\n- Consultar agendamentos do próprio cliente\n- Calcular preços usando exclusivamente a tool calcular_preco\n\nPROIBIÇÕES:\nVocê nunca pode:\n- Alterar preços ou serviços\n- Criar promoções ou aplicar descontos\n- Modificar dados do banco\n- Executar ações fora do agendamento\n- Confiar em preços informados pelo cliente\n- Calcular preços manualmente\n- Editar agendamentos de outros clientes\n- Salvar horários em UTC ou com sufixo Z\n\nPREÇOS:\nOs preços são definidos exclusivamente pelo banco de dados.\nSempre utilize a tool calcular_preco quando necessário.\nNunca calcule preços manualmente.\n\nTRATAMENTO DE FALHAS:\n- Nunca exponha erros internos\n- Em caso de falha, responda naturalmente\n- Nunca mencione ferramentas, sistema ou banco de dados\nExemplo: \"Não consegui verificar os horários agora, pode tentar em instantes?\"\n\nFORMATO DE RESPOSTA:\nResponda apenas com texto limpo e direto.\nNunca mostre chamadas de ferramentas, funções ou código na resposta.\nEnvie apenas UMA mensagem por resposta\nMáximo de 3 linhas\nMensagens curtas e diretas\nNunca use mais de 100 caracteres por resposta"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        2240,
+        144
+      ],
+      "id": "1f56a741-09be-4934-bccc-941b872c0b14",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Code in JavaScript').item.json.telefone }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        2320,
+        336
+      ],
+      "id": "3d0b7906-5e31-411b-bcd9-a86017ffa605",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "JJX4cYEPJV8hYZxQ",
+          "name": "Barbearia teste"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/Barbearia%20apenas%20teste",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.EVOLUTION_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={   \"number\": \"{{ $('Code in JavaScript').item.json.telefone }}\",   \"text\": {{ JSON.stringify($json.output) }} }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        3680,
+        176
+      ],
+      "id": "8cc94717-a6b7-4f0e-a3d4-b2db1089e4e4",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst data = input?.body?.data || input?.data || input;\n\nif (!data?.key?.remoteJid || data.key.remoteJid.includes('@g.us')) {\n  return [];\n}\nif (data.key.fromMe === true) {\n  return [];\n}\n\nconst telefone = data.key.remoteJid.replace('@s.whatsapp.net', '');\nconst nome = data.pushName || 'Cliente';\nconst mensagemTexto = data.message?.conversation \n  || data.message?.extendedTextMessage?.text \n  || '';\nconst audioUrl = data.message?.audioMessage?.url || null;\nconst messageId = data.key?.id || null;\nconst isAudio = !!audioUrl;\n\nif (!mensagemTexto && !isAudio) return [];\n\nreturn [{\n  json: { telefone, nome, mensagem: mensagemTexto, isAudio, audioUrl, messageId }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        144
+      ],
+      "id": "4a729e52-8af3-413d-9c8d-471672a5aeee",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Use esta tool para consultar os serviços disponíveis na barbearia, \nincluindo nome, descrição, preço e duração. Use sempre que o cliente \nperguntar sobre serviços, preços ou o que a barbearia oferece.",
+        "operation": "executeQuery",
+        "query": "SELECT nome, descricao, preco, duracao_minutos \nFROM servicos \nWHERE ativo = true\nORDER BY preco ASC",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        2192,
+        624
+      ],
+      "id": "94a72b3d-bb4a-44a1-8319-d983968dfe99",
+      "name": "ver_servicos",
+      "credentials": {
+        "postgres": {
+          "id": "JJX4cYEPJV8hYZxQ",
+          "name": "Barbearia teste"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Use esta tool para verificar se um horário específico está disponível \nem uma data. Se o horário solicitado não estiver disponível, sugira \nos horários mais próximos disponíveis acima e abaixo do solicitado.\nPasse a data no formato YYYY-MM-DD.\nNunca confirme horários que já passaram — sempre compare com o horário atual de Brasília antes de criar o agendamento.",
+        "operation": "executeQuery",
+        "query": "WITH horarios AS (\n  SELECT generate_series(\n    ($1::date + TIME '09:00')::timestamptz AT TIME ZONE 'America/Sao_Paulo',\n    ($1::date + TIME '18:00')::timestamptz AT TIME ZONE 'America/Sao_Paulo',\n    INTERVAL '15 minutes'\n  ) AS horario\n),\nocupados AS (\n  SELECT data_hora FROM agendamentos\n  WHERE DATE(data_hora AT TIME ZONE 'America/Sao_Paulo') = $1::date\n  AND status = 'confirmado'\n)\nSELECT TO_CHAR(horario AT TIME ZONE 'America/Sao_Paulo', 'HH24:MI') AS horario_livre\nFROM horarios\nWHERE horario NOT IN (SELECT data_hora FROM ocupados)\nORDER BY horario",
+        "options": {
+          "queryReplacement": "={{ $fromAI(\"data\", \"data para verificar horários no formato YYYY-MM-DD\") }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        2400,
+        560
+      ],
+      "id": "3534decd-e38b-4c1f-9fa3-af6010b8db56",
+      "name": "ver_horarios_disponiveis",
+      "credentials": {
+        "postgres": {
+          "id": "JJX4cYEPJV8hYZxQ",
+          "name": "Barbearia teste"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Use esta tool para criar um novo agendamento.\nOBRIGATÓRIO: só use após confirmar com o cliente:\nnome completo, serviço, data e horário.\nNunca use nome padrão — use apenas o nome que o cliente informou.\nSalve a data_hora sempre com o fuso horário de Brasília no formato: \nYYYY-MM-DD HH:MM:SS-03:00\nExemplo: 2026-05-08 10:00:00-03:00",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "agendamentos",
+          "mode": "list",
+          "cachedResultName": "agendamentos"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "telefone": "={{ $('Code in JavaScript').item.json.telefone }}",
+            "nome_cliente": "={{ $fromAI(\"nome\", \"nome completo informado pelo cliente durante a conversa, nunca use valor padrão\") }}",
+            "servico": "={{ $fromAI(\"servico\", \"nome do serviço escolhido\") }}",
+            "data_hora": "={{ $fromAI(\"data_hora\", \"data e hora no formato YYYY-MM-DD HH:MM\") }}",
+            "status": "confirmado"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "telefone",
+              "displayName": "telefone",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nome_cliente",
+              "displayName": "nome_cliente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "servico",
+              "displayName": "servico",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "data_hora",
+              "displayName": "data_hora",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "criado_em",
+              "displayName": "criado_em",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        2528,
+        576
+      ],
+      "id": "3a86a1be-0370-4f14-aa78-225c001cd481",
+      "name": "criar_agendamento",
+      "credentials": {
+        "postgres": {
+          "id": "JJX4cYEPJV8hYZxQ",
+          "name": "Barbearia teste"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Use esta tool para cancelar um agendamento existente. Use somente \nquando o cliente pedir explicitamente para cancelar. Confirme com \no cliente qual agendamento deseja cancelar antes de executar.",
+        "operation": "update",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "agendamentos",
+          "mode": "list",
+          "cachedResultName": "agendamentos"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "={{ $fromAI(\"status\", \"cancelado\") }}",
+            "telefone": "={{ $fromAI(\"telefone\", \"número do cliente\") }}"
+          },
+          "matchingColumns": [
+            "telefone"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "telefone",
+              "displayName": "telefone",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "nome_cliente",
+              "displayName": "nome_cliente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "servico",
+              "displayName": "servico",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "data_hora",
+              "displayName": "data_hora",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "criado_em",
+              "displayName": "criado_em",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        2656,
+        544
+      ],
+      "id": "3864f021-c77a-4757-b35f-6394bf329c67",
+      "name": "cancelar_agendamento",
+      "credentials": {
+        "postgres": {
+          "id": "JJX4cYEPJV8hYZxQ",
+          "name": "Barbearia teste"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let output = '';\n\ntry {\n  output = $('AI Agent').first().json.output || '';\n} catch(e) {\n  output = $input.first().json.output || '';\n}\n\nconst limpo = output\n  .replace(/<function=[\\s\\S]*?<\\/function>/g, '')\n  .replace(/\\{[\\s\\S]*?\\}/g, '')\n  .replace(/\\n{3,}/g, '\\n\\n')\n  .trim();\n\nreturn [{\n  json: {\n    telefone: $('Code in JavaScript').first().json.telefone,\n    output: limpo\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3440,
+        176
+      ],
+      "id": "9bd08ceb-ed4a-4839-8485-6203458d06d6",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "amount": 4.5
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1312,
+        160
+      ],
+      "id": "4877367c-489b-4bd7-a960-6fa1861b0ce0",
+      "name": "Wait",
+      "webhookId": "bdcb0701-b61e-4e08-a3f3-5de7867eb14a"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  string_agg(mensagem, ' ' ORDER BY criado_em ASC) as mensagem,\n  telefone\nFROM mensagens_buffer\nWHERE telefone = $1\nAND processado = false\nAND criado_em >= NOW() - INTERVAL '10 seconds'\nGROUP BY telefone",
+        "options": {
+          "queryReplacement": "={{ $json.telefone }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1520,
+        160
+      ],
+      "id": "cd0e4e7b-9b5b-4d2e-818b-a63e39447472",
+      "name": "Execute a SQL query1",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "JJX4cYEPJV8hYZxQ",
+          "name": "Barbearia teste"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE mensagens_buffer \nSET processado = true \nWHERE telefone = $1\nAND processado = false",
+        "options": {
+          "queryReplacement": "={{ $json.telefone }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1728,
+        160
+      ],
+      "id": "31130b59-153c-4ff1-9db5-995b81e0fe56",
+      "name": "Execute a SQL query2",
+      "credentials": {
+        "postgres": {
+          "id": "JJX4cYEPJV8hYZxQ",
+          "name": "Barbearia teste"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "seu-email@gmail.com",
+          "mode": "list",
+          "cachedResultName": "seu-email@gmail.com"
+        },
+        "start": "={{ $json.data_inicio }}",
+        "end": "={{ $json.data_fim }}",
+        "additionalFields": {
+          "description": "=Cliente: {{ $json.nome_cliente }}\nTelefone: {{ $json.telefone }}\nServiço: {{ $json.servico }}\nData: {{ $json.data_hora }}",
+          "summary": "=Barbearia - {{ $json.servico }} - {{ $json.nome_cliente }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        3168,
+        80
+      ],
+      "id": "0f8b44ce-4030-4959-8873-5b34021505d0",
+      "name": "Create an event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "y2QzCIAis95wx3wE",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "7cc20e9d-cb37-4520-9799-a1e60728d534",
+              "leftValue": "={{ $json.output.toLowerCase() }}",
+              "rightValue": "agendamento confirmado",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2560,
+        160
+      ],
+      "id": "94b1384a-1fea-48d3-93c6-477977b47986",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT nome_cliente, servico, data_hora, telefone\nFROM agendamentos\nWHERE telefone = $1\nAND status = 'confirmado'\nORDER BY criado_em DESC\nLIMIT 1",
+        "options": {
+          "queryReplacement": "={{ $('Code in JavaScript').item.json.telefone }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2752,
+        80
+      ],
+      "id": "7a8c7e7f-1627-48e8-8675-ca13e3233e6c",
+      "name": "Execute a SQL query3",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "JJX4cYEPJV8hYZxQ",
+          "name": "Barbearia teste"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Use esta tool quando o cliente perguntar sobre seus agendamentos, \nquiser ver horários marcados ou consultar próximas visitas.",
+        "operation": "executeQuery",
+        "query": "WITH horarios AS (\n  SELECT generate_series(\n    ($1::date + TIME '09:00')::timestamptz AT TIME ZONE 'America/Sao_Paulo',\n    ($1::date + TIME '18:00')::timestamptz AT TIME ZONE 'America/Sao_Paulo',\n    INTERVAL '1 hour'\n  ) AS horario\n),\nocupados AS (\n  SELECT data_hora FROM agendamentos\n  WHERE DATE(data_hora AT TIME ZONE 'America/Sao_Paulo') = $1::date\n  AND status = 'confirmado'\n)\nSELECT TO_CHAR(horario AT TIME ZONE 'America/Sao_Paulo', 'HH24:MI') AS horario_livre\nFROM horarios\nWHERE horario NOT IN (SELECT data_hora FROM ocupados)\nORDER BY horario",
+        "options": {
+          "queryReplacement": "={{ $fromAI(\"data\", \"data no formato YYYY-MM-DD\") }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        2128,
+        560
+      ],
+      "id": "356eb8ee-0d4c-441b-b7ac-4f23dc366a0c",
+      "name": "ver_meus_agendamentos",
+      "credentials": {
+        "postgres": {
+          "id": "JJX4cYEPJV8hYZxQ",
+          "name": "Barbearia teste"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        2800,
+        576
+      ],
+      "id": "b63cfbf4-cab2-4005-8ab2-a8378bd7a5ae",
+      "name": "Calculator"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "cba9174a-1155-4332-9e65-a1bf52ce5186",
+              "leftValue": "={{ $json.isAudio }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -224,
+        144
+      ],
+      "id": "8f4ac31e-1ce0-4a14-9d29-95efd2c40412",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Use esta tool para consultar a data e hora atual de Brasília.\nUse SEMPRE antes de criar ou verificar qualquer agendamento para garantir que a data e horário estão corretos.",
+        "outputFieldName": "data_hora_atual",
+        "options": {
+          "timezone": "America/Sao_Paulo"
+        }
+      },
+      "type": "n8n-nodes-base.dateTimeTool",
+      "typeVersion": 2,
+      "position": [
+        2896,
+        576
+      ],
+      "id": "3d95c17f-c603-428f-a95c-75a4a07d0def",
+      "name": "data_hora_atual"
+    },
+    {
+      "parameters": {
+        "jsCode": "const dataHora = $input.first().json.data_hora;\nconst dt = new Date(dataHora);\n\n// Converte UTC para Brasília subtraindo 3 horas\nconst brasilia = new Date(dt.getTime() - 3 * 60 * 60 * 1000);\n\nconst pad = n => String(n).padStart(2, '0');\nconst ano = brasilia.getUTCFullYear();\nconst mes = pad(brasilia.getUTCMonth() + 1);\nconst dia = pad(brasilia.getUTCDate());\nconst hora = pad(brasilia.getUTCHours());\nconst min = pad(brasilia.getUTCMinutes());\n\nconst inicio = `${ano}-${mes}-${dia}T${hora}:${min}:00-03:00`;\nconst fim = new Date(brasilia.getTime() + 60 * 60 * 1000);\nconst fimStr = `${fim.getUTCFullYear()}-${pad(fim.getUTCMonth()+1)}-${pad(fim.getUTCDate())}T${pad(fim.getUTCHours())}:${pad(fim.getUTCMinutes())}:00-03:00`;\n\nreturn [{\n  json: {\n    ...$input.first().json,\n    data_inicio: inicio,\n    data_fim: fimStr\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2960,
+        80
+      ],
+      "id": "a015238f-3215-4b4a-8989-249a10ef6771",
+      "name": "Code in JavaScript3"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.EVOLUTION_API_URL }}/chat/getBase64FromMediaMessage/Barbearia%20apenas%20teste",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.EVOLUTION_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"message\": {\n    \"key\": {\n      \"id\": \"{{ $json.messageId }}\"\n    }\n  },\n  \"convertToMp4\": false\n}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "db890ec8-a8fb-4b96-a1a0-d697afe2d9a2",
+      "name": "HTTP Request1",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/audio/transcriptions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.GROQ_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "whisper-large-v3"
+            },
+            {
+              "name": "language",
+              "value": "pt"
+            },
+            {
+              "name": "response_format",
+              "value": "text"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        560,
+        0
+      ],
+      "id": "163eae08-f61d-4991-a518-1bc95ea4225f",
+      "name": "HTTP Request2",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "base64",
+        "options": {
+          "fileName": "audio.ogg",
+          "mimeType": "audio/ogg"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        288,
+        0
+      ],
+      "id": "d08d1ea7-00cf-4845-86b2-9db8ecc8f0be",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6b774b2f-0d26-409d-a650-59139512ddc7",
+              "name": "telefone",
+              "value": "={{ $('Code in JavaScript').item.json.telefone }}",
+              "type": "number"
+            },
+            {
+              "id": "b9563b0f-6c3d-452d-9f73-2a98439f6a80",
+              "name": "mensagem",
+              "value": "={{ $json.data }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        800,
+        0
+      ],
+      "id": "8198ae6a-a5b0-4ed3-8516-72fbcf469c07",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        2112,
+        352
+      ],
+      "id": "6878b961-3fbf-43ff-91a3-9d3cd4fc5d2f",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "value": "public",
+          "mode": "list",
+          "cachedResultName": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "mensagens_buffer",
+          "mode": "list",
+          "cachedResultName": "mensagens_buffer"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "processado": false,
+            "telefone": "={{ $json.telefone }}",
+            "mensagem": "={{ $json.mensagem }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "telefone",
+              "displayName": "telefone",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "mensagem",
+              "displayName": "mensagem",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "processado",
+              "displayName": "processado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "criado_em",
+              "displayName": "criado_em",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1120,
+        160
+      ],
+      "id": "a18529ff-fc91-42e5-bf80-cf1f99477fa3",
+      "name": "Salvar mensagem",
+      "credentials": {
+        "postgres": {
+          "id": "JJX4cYEPJV8hYZxQ",
+          "name": "Barbearia teste"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ver_servicos": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ver_horarios_disponiveis": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "criar_agendamento": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "cancelar_agendamento": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query1": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query2": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an event": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query3": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ver_meus_agendamentos": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Salvar mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "data_hora_atual": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript3": {
+      "main": [
+        [
+          {
+            "node": "Create an event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Salvar mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Salvar mensagem": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "0ebba679-0c7c-467d-8c1c-fb52321bd2ee",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "bf4f9ff826d1bbd056c5ec3ad85d3ff7e5ae15136d78e22a248b76d85069f3bb"
+  },
+  "id": "nY558j5YkkbWXhR9",
+  "tags": []
+}
