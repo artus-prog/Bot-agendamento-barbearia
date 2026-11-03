@@ -2,7 +2,7 @@
 
 Atendente virtual que conversa com clientes pelo WhatsApp, entende o que eles querem (serviços, horários, agendar, cancelar), grava os agendamentos em um banco PostgreSQL e cria o evento no Google Calendar.
 
-Projeto desenvolvido em dupla, como estudo de automação com IA e banco de dados. Foi usado como protótipo (instância de teste), **ainda não é um sistema pronto para produção**: veja a seção [Limitações conhecidas](#limitações-conhecidas).
+Projeto desenvolvido como estudo de automação com IA e banco de dados. Foi usado como protótipo (instância de teste), **ainda não é um sistema pronto para produção**: veja a seção [Limitações conhecidas](#limitações-conhecidas).
 
 ## O que ele faz
 
